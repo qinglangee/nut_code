@@ -1,0 +1,1 @@
+mvn install:install-file -DgroupId=com.lifeix -DartifactId=lifeix-dataanalyzer-client -Dversion=1.2.7-SNAPSHOT -Dpackaging=jar -Dfile=/home/lifeix/workspace/lifeix-dataanalyzer-client/target/lifeix-dataanalyzer-client-1.2.7-SNAPSHOT.jar

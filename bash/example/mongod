@@ -1,0 +1,68 @@
+#! /bin/bash
+
+ReturnVal=0
+
+ZHMONGOD=/home/zhch/software/mongodb-linux-x86_64-2.6.8/bin/mongod
+MONGOPIDFILE=/var/run/mongodb/mongod.pid
+
+start()
+{
+     # Star the service. 
+     $ZHMONGOD -f /etc/mongod/mongod.conf
+     echo "Service is being started..."
+}
+
+stop()
+{
+    # Stop the service here.
+    echo "Service is being stopped..."
+    if [ ! -f "$MONGOPIDFILE" ]
+    then
+      echo "no zookeeper to stop (could not find file $MONGOPIDFILE)"
+    else
+      kill $(cat "$MONGOPIDFILE")
+      rm "$MONGOPIDFILE"
+      echo STOPPED
+    fi
+}
+
+restart()
+{
+    echo "Service is being Restarted..."
+    stop
+    start
+}
+status()
+{
+    echo "use  mongostat"
+
+}
+
+# Main Wrapper
+case $1 in
+
+start)
+start
+;;
+
+stop)
+stop
+;;
+
+restart)
+restart
+;;
+
+status)
+status
+;;
+
+*)
+echo "Invalid Option related to the Service."
+echo $"Usage: $0 {start|stop|restart|status}"
+
+exit 1
+esac
+
+exit $ReturnVal
+

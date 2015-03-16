@@ -1,0 +1,20 @@
+#! /bin/bash
+compress_file(){
+    for file in $1/* 
+    do
+        if [[  -d $file ]]
+        then
+            mkdir comm/$file
+            compress_file $file
+        elif [[ "$file" =~ .*\.js ]] 
+        then
+            echo $file
+            touch comm/$file
+            java -jar compiler.jar --js $file --js_output_file comm/$file >> log
+        fi
+    done
+}
+
+date > log
+mkdir comm/js
+compress_file js

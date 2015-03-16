@@ -1,0 +1,2 @@
+#! /bin/bash
+scp -P6022 -r zhch skstsuperadmin@192.168.199.166:/home/skstsuperadmin/

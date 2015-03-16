@@ -1,0 +1,10 @@
+#! /bin/bash
+l06dir=/home/lifeix/workspace_kepler/lifeix-web/
+
+for file in "src/main/resources/l99search.properties"  "src/main/resources/system-config.xml"  "src/main/resources/systemserver-config.xml"; do
+    filename=$l06dir$file
+    echo $filename
+    # 把z:换成 /nfsdata/filedata
+    sed -i "s/z:/\/nfsdata\/filedata/g"  $filename
+    sed -i "s/Z:/\/nfsdata\/filedata/g"  $filename
+done

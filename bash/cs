@@ -1,0 +1,23 @@
+#! /bin/bash
+# a short cut for cd
+if [[ $# -eq 0 ]];then exit 0;fi;
+count=1
+desc="." # 从当前目录开始
+for arg in $* # 遍历参数
+do
+    if [[ -e $arg ]];
+    then 
+        desc=$desc/$arg # 与参数同名的目录存在就选择这个目录
+    else
+        for file in `ls $desc` # 没有同名的就选择第一个能匹配的目录
+        do
+            if [[ $file =~ $arg ]]
+            then
+                desc=$desc/$file
+                break
+            fi 
+        done
+    fi
+done
+echo $desc
+cd $desc

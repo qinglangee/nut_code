@@ -1,0 +1,10 @@
+mysql_host="localhost"
+mysql_user="foot"
+mysql_password="foot"
+mysql_db="l99_footprint"
+
+mongo_host="192.168.50.220"
+mongo_db="eatables"
+
+echo "I am local parameters"
+

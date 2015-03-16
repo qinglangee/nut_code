@@ -1,0 +1,11 @@
+#! /bin/bash
+tag_file="lifeix-web-6.1.1-release-reec4b85.war"
+for file in *.war ; do
+    newer=`find $tag_file -newer $file`
+    if [ "$newer" == "$tag_file" ]; then
+        rm $file
+    else
+        echo "newer : $file"
+    fi
+done
+

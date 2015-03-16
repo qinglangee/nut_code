@@ -1,0 +1,16 @@
+#! /bin/bash
+logfile="/home/lifeix/Nutstore/notes/zhlog"
+if [[ $# -eq 0 ]]
+then
+	tail $logfile
+	exit 0
+fi
+
+if [[ $1 == '-n' ]];then
+	tail -n $2 $logfile
+	exit 0
+fi
+
+
+echo `date +"%Y-%m-%d %T"` $@  >> $logfile
+tail $logfile

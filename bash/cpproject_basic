@@ -1,0 +1,100 @@
+#! /bin/bash
+if [[ $# -lt 4 ]];then
+cat << EOF
+with out enough parameters!!
+Example: 
+
+cpproject -w /home/lifeix/workspace -n lifeix-recs-api
+
+cpproject -w /home/lifeix/workspace -n lifeix-recs-api -web src/main/web/WEB-INF
+
+cpproject -w /home/wkspc -n lifeix-web -p src/main/web/WEB-INF/pages
+
+    -w workspace
+    -n project name
+    -s sub class dir
+    -p page dir
+    -j js dir
+EOF
+fi;
+# cp 文件, 目录, $3是说明文字
+function printCopy {
+    # 不加引号*会展开成文件名, 加了引号不会展开
+    echo "cp $3"
+    echo "cp -u -r $1 $2"
+    cp -u -r $1 $2
+}
+function copyExistFiles {
+    if [[ -e $1 ]] ; then
+        printCopy $1 $2 $3
+    fi
+}
+# 检测参数个数是偶数
+if [[ $#%2 -ne 0 ]]
+then
+    echo wrong parameter count!!
+    exit 1;
+fi
+
+workspace="/tmp"
+projectName=""
+subclassDir="target/classes"
+pageDir="WebRoot/WEB-INF/pages"
+pageDest="WEB-INF"
+jsDir="WebRoot/js"
+jsDir2="WebRoot/js2"
+jsDest=""
+cssDir="WebRoot/css"
+cssDest=""
+webinf="src/main/web/WEB-INF"
+
+while [[ $1 ]]
+do
+    if [[ $1 = "-w" ]]; then
+        workspace=$2
+    elif [[ $1 = "-n" ]]; then
+        projectName=$2
+    elif [[ $1 = "-s" ]]; then
+        subclassDir=$2
+    elif [[ $1 = "-p" ]]; then
+        pageDir=$2
+    elif [[ $1 = "-pd" ]]; then
+        pageDest=$2
+    elif [[ $1 = "-j" ]]; then
+        jsDir=$2
+    elif [[ $1 = "-j2" ]]; then
+        jsDir2=$2
+    elif [[ $1 = "-jd" ]]; then
+        jsDest=$2
+    elif [[ $1 = "-c" ]]; then
+        cssDir=$2
+    elif [[ $1 = "-cd" ]]; then
+        cssDest=$2
+    elif [[ $1 = "-web" ]]; then
+        webinf=$2
+    else
+        echo wrong parameters
+        exit 1;
+    fi
+    shift 2
+done
+echo $projectName  $subclassDir
+
+rootDir="$workspace/$projectName"
+
+destDir="$rootDir/target/$projectName"
+classDir="$rootDir/$subclassDir"
+
+# copy classs
+if [[ ! -e $destDir/WEB-INF/ ]] ; then
+    mkdir -p $destDir/WEB-INF/
+fi
+copyExistFiles "$classDir" "$destDir/WEB-INF/" "classes"
+copyExistFiles "$rootDir/$webinf" "$destDir" "WEB-INF"
+# copy pages
+copyExistFiles "$rootDir/$pageDir" "$destDir/$pageDest" "pages"
+# copy js
+copyExistFiles "$rootDir/$jsDir" "$destDir/$jsDest" "js dir 1"
+copyExistFiles "$rootDir/$jsDir2" "$destDir/$jsDest" "js dir 2"
+# copy css
+copyExistFiles "$rootDir/$cssDir" "$destDir/$cssDest" "css"

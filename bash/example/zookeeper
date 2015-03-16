@@ -1,0 +1,61 @@
+#!/bin/bash
+ 
+ReturnVal=0
+
+ZOO_LOG_DIR=/home/lifeix/temp/appdata/zookeeper/logs
+ZHZK=/home/lifeix/software/zookeeper-3.4.5/bin/zkServer.sh
+ 
+start()
+{
+     # Star the service. 
+     $ZHZK start
+     echo "Service is being started..."
+}
+ 
+stop()
+{
+    # Stop the service here.
+    $ZHZK stop
+    echo "Service is being stopped..."
+}
+ 
+restart()
+{
+    echo "Service is being Restarted..."
+    stop
+    start
+}
+status()
+{
+    $ZHZK status
+    
+} 
+
+# Main Wrapper
+ 
+case $1 in 
+ 
+start)
+start
+;;
+ 
+stop)
+stop
+;;
+ 
+restart)
+restart
+;;
+ 
+status)
+status
+;;
+ 
+*)
+echo "Invalid Option related to the Service."
+echo $"Usage: $0 {start|stop|restart}"
+ 
+exit 1
+esac
+ 
+exit $ReturnVal

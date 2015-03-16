@@ -1,0 +1,108 @@
+#! /bin/bash
+
+# 没啥用处 
+function grepv {
+    echo grepv...
+    return;
+}
+function bb {
+    if [[ $# < 1 ]] ; then
+    	echo "error params!" ;return;
+        return;
+    fi
+
+    ssh -p 6022 skstsuperadmin@192.168.201.$1
+}
+
+
+function bj {
+    if [[ $# < 1 ]] ; then
+    	echo "error params!" ;return;
+        return;
+    fi
+
+    ssh -p 6022 skstsuperadmin@192.168.199.$1
+}
+
+function bj2 {
+    if [[ $# < 1 ]] ; then
+        echo "error params!" ;return;
+        return;
+    fi
+
+    ssh -p 6022 skstsuperadmin@192.168.201.$1
+}
+
+
+
+# 连接1段服务器
+function j1 {
+	if [ $# -eq 0 ]; then 
+		echo "error ip!!";return;
+	fi
+	ssh_server 1 $1;
+	return;
+} 
+# 连接2段服务器
+function j2 {
+	if [ $# -eq 0 ]; then 
+		echo "error ip!!";return;
+	fi
+	ssh_server 2 $1;
+	return;
+}
+
+# 连接5段服务器
+function j5 {
+	if [ $# -eq 0 ]; then 
+		echo "error ip!!";return;
+	fi
+	ssh_server 5 $1;
+	return;
+} 
+
+# ssh连接服务器
+function ssh_server {
+	if [ $# -lt 2 ]; then 
+		echo "error params!" ;return;
+	fi
+	#echo $1 $2
+	if [ $1 -eq 1 ]; then
+		ssh root@192.168.1.$2
+	elif [ $1 -eq 2 ]; then
+		ssh root@192.168.2.$2
+	elif [ $1 -eq 5 ]; then
+		ssh lifeix@192.168.50.$2
+	fi
+	return;
+}
+
+# git 比较版本不同
+gitparam=""
+function gitdn {
+    gitparam="--name-status"
+    gitd_fun $@
+}
+function gitd {
+    gitparam=""
+    gitd_fun $@
+}
+function gitd_fun {
+    if [ $# -eq 0 ]; then
+        echo "useage:  gitd  version_number"; return;
+    fi
+    if [ $# -eq 1 ]; then
+        git diff $gitparam $1^..$1
+    elif [ $# -eq 2 ]; then
+        git diff $gitparam $1$2..$1
+    fi
+    return;
+}
+
+# jybot pybot  运行测试
+function jy {
+    jybot --outputdir /home/lifeix/temp/d3/output $@
+}
+function py {
+    pybot --outputdir /home/lifeix/temp/d3/output $@
+}

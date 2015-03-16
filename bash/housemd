@@ -1,0 +1,1 @@
+java -Xbootclasspath/a:$JAVA_HOME/lib/tools.jar -jar /home/lifeix/temp/github/housemd/housemd/target/scala-2.9.2/housemd_2.9.2-0.2.4.min.jar $@

@@ -1,0 +1,10 @@
+mysql_host="192.168.1.15"
+mysql_user="skst"
+mysql_password='TestDBSkst$@'
+mysql_db="v506_20120306"
+
+mongo_host="192.168.1.200"
+mongo_db="eatables"
+
+echo "I am neiwang  parameters"
+

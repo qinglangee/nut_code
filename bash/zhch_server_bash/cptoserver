@@ -1,0 +1,35 @@
+#! /bin/bash
+
+#useage
+#./cptoserver 1.17
+#./cptoserver 192.168.50.123 jkjk
+#./cptoserver
+
+
+function cp_to_server(){
+    cp_to_ip "192.168.$1";
+}
+function cp_to_ip(){
+    dest_ip=$1
+    dest_dir="/root/$zhch_dir"
+    echo "copy file to $dest_ip ==================================="
+    scp -r ../$zhch_dir root@$dest_ip:/root/
+    ssh root@$dest_ip "rm $dest_dir/cptoserver" 
+}
+
+zhch_dir="zhch_server_bash"
+echo "param size: $#"
+if [ $# -eq 1 ] ;then
+    cp_to_server $1
+    exit
+elif [ $# -eq 2 ]; then
+    cp_to_ip $1
+    exit
+fi
+
+for ip_suff in 1.17 1.21 1.66 1.103 1.104 1.106 1.110 1.112 1.119 1.121 1.122 1.128 1.127 1.129 1.242 1.185 1.218
+do
+    cp_to_server $ip_suff
+done
+
+

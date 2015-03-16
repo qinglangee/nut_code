@@ -1,0 +1,16 @@
+#! /bin/bash
+#alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+while [ true ] ; do 
+num=`curl http://comment101.l99.com/comment_timeout.html|wc -l`
+
+if [ $num -gt 10 ]
+then
+    echo gt
+    notify-send  "comment timeout!"
+    #alert  "comment timeout!"
+else 
+    echo `date`
+fi
+
+sleep 5
+done

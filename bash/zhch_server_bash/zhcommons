@@ -1,0 +1,43 @@
+#! /bin/bash
+[ -z "$ZHCH_ROOT" ] && ZHCH_ROOT="/root/zhch_server_bash"
+
+alias zhcd="cd $ZHCH_ROOT"
+alias zhtom="cd /usr/local/tomcat"
+alias zhl="tail -fn500 "
+alias zhvlog="vim logs/catalina.out"
+alias zhll="tail -fn500 logs/catalina.out"
+
+alias psg="ps aux|grep "
+alias lsg="ls |grep "
+alias netg="netstat -anp|grep "
+alias hisg="history|grep "
+alias lsga="ls -a|grep "
+alias llg="ll |grep "
+alias llga="ll -a|grep "
+alias grep="grep --color=auto "
+
+# 把文件cp到我的机器上
+
+function tozh {
+    if [[ $# -eq 0 ]] ; then
+        echo "useage: zhscp  filename"
+        return 0
+    fi
+    if [[ ! -e $1 ]] ; then
+        echo $1 is not exist !!
+        return 0
+    fi
+    if [[ -d $1 ]] ; then
+        echo $1 is a dir
+    else
+        echo $1 is a file
+    fi
+    scp -r $1 zhch@192.168.50.124:/home/lifeix/temp/d3/
+}
+function fromzh {
+    if [[ $# -eq 0 ]] ; then
+        echo "useage: zhscp  filename"
+        return 0
+    fi
+    scp -r zhch@192.168.50.124:/home/lifeix/temp/d3/$1 .
+}

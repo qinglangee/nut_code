@@ -1,0 +1,7 @@
+if [[ $# -eq 0 ]]
+then
+    ssh -qTfnN -D 7070  root@192.168.1.17;ps aux|grep  --color=auto 7070
+else
+    ps aux | grep 7070 |grep qTfnN| grep -v 'grep' | awk '{print $2}' | xargs kill -9; ps aux|grep --color=auto 7070;zhsocket
+fi
+exit 0
