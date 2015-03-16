@@ -1,0 +1,3 @@
+#! /bin/bash
+zhgit="git --git-dir=/home/lifeix/Documents/alone_git/wordpress "
+$zhgit  $@
