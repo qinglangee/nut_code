@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<meta charset="utf-8"/>
+	<script type="text/javascript" src="moment.min.js"></script>
+	<script type="text/javascript" src="jquery-1.9.1.js"></script>
+	<style>
+	.timeBtn{width:40%;margin-left:10px;height:100px;border:solid 1px;font-size: 48px}
+	body{font-size: 48px;}
+	</style>
+</head>
+<body>
+	<input type="button" value="prev" id="prev" class="timeBtn"/>
+	<input type="button" value="next" id="next" class="timeBtn"/>
+	<br><br>
+	now time is : <span id="nowtime"></span><br>
+	<div id="reviewDiv">
+		
+	</div>
+
+</body>
+<script type="text/javascript">
+	var NOW = moment().format("YYYY-MM-DD");
+	function setTime(){
+		var reviewTime = [4,10,20];
+		
+		for(var i=0;i<reviewTime.length;i++){
+			var subDays = reviewTime[i];
+			var reviewDate = moment(NOW).subtract(subDays, "d");
+			var reviewHtml = "前 " + subDays + " 天: " + reviewDate.format("YYYY-MM-DD") + "<br>";
+			$("#reviewDiv").append(reviewHtml);
+		}
+		$("#nowtime").html(moment(NOW).format('YYYY-MM-DD'))
+	}
+	function adjustNow(days){
+		NOW = moment(NOW).add(days, "d").format("YYYY-MM-DD");
+		$("#reviewDiv").html("");
+		setTime();
+	}
+
+	$("#prev").click(function(){adjustNow(-1)});
+	$("#next").click(function(){adjustNow(1)});
+	setTime();
+</script>
+</html>

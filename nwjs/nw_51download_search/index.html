@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hello World!</title>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <h1>Hello World!</h1>
+    We are using node.js <script>document.write(process.version)</script>.
+  </body>
+<script >
+//  add title zanshi qudiao
+
+
+// sglzhh
+var gui = require('nw.gui');
+var fs = require('fs');
+var http = require('http');
+const querystring = require('querystring');
+var path = require('path');
+
+var zhlog = require('./zhlog');
+var Upload = require('./upload');
+
+
+
+
+var G_conf = {}; // 全局配置
+var G_logFile = "";
+var G_keywords = [];
+var currKeyword = "abc";
+var G_keywordDir = "";
+var searchIndexUrl="";
+var loginedCount = 0;
+var G_tooFastTime = 0; // 连续遇到操作频繁的次数
+var G = {};
+var G_condition = {};
+G.alreadyLogin = 0;
+G.keepLogin = true; // 在登录页面要不要进行登录
+G.downloadCount = 0;
+G.sendSearchId = true;
+G.firstSearchId = 3582;
+G.stopSearchIdMap = {};  // 上传文件时返回的要停止的 searchId 记录在这里
+G.useLocal = false;
+
+// var G_searchHost = {
+// 	host:"192.168.0.100",
+// 	port:8480
+// };
+
+var G_searchHost = {
+	host:"www.souqiantu.com",
+	port:8200
+};
+
+
+
+function main(){
+	start();
+}
+
+// 取得一条搜索记录， 开始下载
+function getData(){
+	zhlog.log("get data 请求数据")
+
+	var getoneUrl = 'http://' + G_searchHost.host + ':' + G_searchHost.port + '/resume/search/getone?typeId=1';
+	if(G.sendSearchId){ // searchId 只发送一次
+		getoneUrl = getoneUrl + "&searchId=" + G.firstSearchId;
+		G.sendSearchId = false;
+	}
+
+	var processData = function(d){
+		try{
+				G.keepLogin = true;  // 开启登录
+				zhlog.log(d);
+				G_keywords = [];
+
+				var resp = JSON.parse(d);
+				if(resp.data != null && resp.data.content != null){
+
+					var searchCondition = JSON.parse(resp.data.content);
+					G_condition = {};
+					G_condition.searchCondition = searchCondition;
+					G_condition.companyGid = resp.data.company_gid;
+					G_condition.searchId = resp.data.id;
+					if(resp.city != null){
+						G_condition.cityId = resp.city;
+					}
+
+					var keyword = "  ";
+					if(searchCondition.query != null){
+						keyword += searchCondition.query;
+					}
+					if(searchCondition.job_title != null){
+						// keyword += " " + searchCondition.job_title;  // job title 现在不放到关键词里面了
+					}
+					G_keywords.push(keyword);
+					start();
+				}else{
+					zhlog.log("没有取得查询条件，sleep 一会");
+					setTimeout(function(){
+						getData();
+				    }, 10 * 1000);
+				}
+				
+			}catch(e){
+				zhlog.log("eeeeeeeeeeeee, 发生了什么事，出错了");
+				zhlog.log(e);
+			}
+	}
+
+	if(G.useLocal){
+		zhlog.log("use local hahaha!!");
+		fs.readFile('../number',function(err, data){
+			if(err) throw err;
+			var number = new Number(data);
+			zhlog.log("now local number is :" + number);
+			
+			fs.readFile('../condition.txt',function(err, data){
+				if(err) throw err;
+				var conditionLines = JSON.parse(data);
+				var d = conditionLines[number];
+				zhlog.log(d.data.content);
+				number++;
+				fs.writeFile('../number',number + "",function(err){
+			        if(err) throw err;
+			        console.log('write new number. ' + number);
+			    });
+
+			    processData(JSON.stringify(d));
+			});
+		});
+		// setTimeout(function(){
+		// 	getData();
+	 //    }, 10 * 1000);
+	}else{
+		http.get(getoneUrl, function(res) {
+			console.log("statusCode: ", res.statusCode);
+			console.log("headers: ", res.headers);
+
+			res.on('data', function(d) {
+				processData(d);
+			});
+
+		}).on('error', function(e) {
+			zhlog.error(e);
+			zhlog.error("查询出错了，sleep 一会");
+			setTimeout(function(){
+				getData();
+		    }, 10 * 1000);
+		});
+	}
+
+
+}
+
+// 结束一条搜索记录
+function completeSearchCondition(){
+	zhlog.log("结束一条搜索记录===================================== companyGid:" +G_condition.companyGid + "  searchId:" + G_condition.searchId);
+	var postData = querystring.stringify({
+	  'companyGid' : G_condition.companyGid,
+	  'searchId':G_condition.searchId,
+	  'typeId':1
+	});
+
+	var options = {
+	  hostname: G_searchHost.host,
+	  port: G_searchHost.port,
+	  path: '/resume/search/complete',
+	  method: 'POST',
+	  headers: {
+	    'Content-Type': 'application/x-www-form-urlencoded',
+	    'Content-Length': Buffer.byteLength(postData)
+	  }
+	};
+
+	var req = http.request(options, function(res){
+	  console.log(`STATUS: ${res.statusCode}`);
+	  console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
+	  res.setEncoding('utf8');
+	  res.on('data', function(chunk){
+	  	zhlog.log("结束一条搜索记录 返回数据 companyGid:" +G_condition.companyGid + "  searchId:" + G_condition.searchId);
+	    zhlog.log(`BODY: ${chunk}`);
+	  });
+	  res.on('end', function(){
+	    zhlog.log('No more data in response.');
+	    setTimeout(function(){
+			getData();
+	    }, 3 * 1000);
+	  });
+	});
+
+	req.on('error', function(e){
+	  zhlog.log(`problem with request: ${e.message}`);
+	});
+
+	// write data to request body
+	req.write(postData);
+	req.end();
+
+}
+
+// init(main);
+init(getData);
+function ttt(){
+	uploadResumeFile("e:\\temp\\resume_keyword\\aa.html", 1);
+}
+
+// init(ttt);
+
+
+function init(callback){
+	var readyCount = 1;  // 异步需要准备的次数
+	var setup = 0; // 异步操作已经准备好的次数 
+	fs.readFile('./config.json',function(err, data){
+		if(err) throw err;
+		G_conf = JSON.parse(data);
+		console.log("dir:" + G_conf.htmlSaveDir);  // 这里 log 还没准备好， 不能写logFile
+		G_logFile = G_conf.htmlSaveDir + "jobdownload.log";
+
+		zhlog.init({logFilename:G_logFile, logLevel:"debug"});
+		setup++;
+		
+
+	});
+
+	// readyCount++;
+	// fs.readFile('./keyword', function(err, data){
+	// 	if(err) throw err;
+	// 	var content = new String(data);
+	// 	content = content.replace(/\r\n/g, "\n");
+	// 	G_keywords = content.split("\n");
+	// 	setup++;
+	// });
+
+	function runCallback(){
+		// zhlog.log("run call back wait times ++");
+		if(setup >= readyCount){
+			callback();
+		}else{
+			setTimeout(function(){
+				runCallback();
+			}, 50);
+		}
+	}
+
+	runCallback();
+}
+function start(){
+	var win = gui.Window.open ('http://ehire.51job.com/MainLogin.aspx', {
+		position: 'center',
+		width: 901,
+		height: 667,
+		focus:true
+	});
+
+	// win.showDevTools();
+
+	win.on ('loaded', function(){
+		zhlog.debug("win.on loaded in.");
+		// the native onload event has just occurred
+		var url = win.window.location.href;
+		var $ = win.window.$;
+		// ccuuv.log(url);
+		zhlog.log("window url is :" + url);
+		if(url.indexOf("MainLogin.aspx") > 0 ){
+			if(G.keepLogin){
+				if(loginedCount < 100){
+					loginedCount++; // = true;
+					login($);
+				}
+				
+			}else{
+				zhlog.log("停止登录了。Game over!")
+				win.close();
+				setTimeout(function(){
+					completeSearchCondition();
+			    }, 2000);
+			}
+		}else if(url.indexOf("ehire.51job.com/Navigate.aspx") > 0){
+			gotoResumeSearch($, win.window);
+		}else if(url.indexOf("ehire.51job.com/Member/UserOffline.aspx") >= 0){
+			accountAlreadyLogin($, win.window);
+		// url:http://ehire.51job.com/Candidate/SearchResumeIndexNew.aspx
+		}else if(url.indexOf("SearchResumeIndexNew.aspx") > 0){
+			if(G_keywords.length > 0){
+				console.log("keywords length:" + G_keywords.length);
+				currKeyword = G_keywords.shift();
+				fillSearchCondition($, win.window, currKeyword);
+			}else{
+				zhlog.log("关键词全都查完了。正在退出 。。。");
+				G.keepLogin = false;
+				if($("#MainMenuNew1_hl_LogOut")[0] != null){
+					$("#MainMenuNew1_hl_LogOut")[0].click();
+					zhlog.log("按了退出按钮");
+				}else{
+					zhlog.log("没有找到退出按钮。。。")
+				}
+
+				if($("#txtMemberNameCN") != null && $("#txtMemberNameCN").length > 0){
+					zhlog.log("误入了登录页面，应该是session退出了, 试着关闭窗口");
+					win.close();
+				}
+			}
+		}else if(url.indexOf("SearchResumeNew.aspx") > 0){
+			downloadResume($, win.window);
+		}else{
+			// ccuuv.log("other url :" + url);
+			zhlog.warn("other url:" + url);
+		}
+		var document = win.window.document;
+	  
+	});
+}
+
+// 登陆
+function login($){
+    $("#txtMemberNameCN").val(G_conf.user.username);
+
+    // 停几秒再登陆， 可以退出登陆后再关闭程序
+    setTimeout(function(){
+	    $("#txtUserNameCN").val(G_conf.user.loginId);
+	    $("#txtPasswordCN").val(G_conf.user.password);
+	    $("#Login_btnLoginCN").click();
+    }, 2000);
+}
+// 账号已经在别的地方登陆
+function accountAlreadyLogin($, pageWin){
+	// 先等一段时间，重新登陆， 等到不耐烦了就强制退出
+	var doc = pageWin.document;
+	zhlog.log("账号已经在别的地方登陆 。");
+	if(G.alreadyLogin != 0 && G.alreadyLogin % 3 == 0){ 
+		var table = doc.getElementById('gvOnLineUser');
+		var links = table.getElementsByTagName('a');
+		links[0].click();
+		zhlog.log("账号已经在别的地方登陆 。强制登陆！！！！");
+	}else{
+		// 过几分钟之后再试试
+		setTimeout(function(){
+			G.alreadyLogin++;
+			doc.getElementById("btnBack").click();
+			zhlog.log("账号已经在别的地方登陆 。 点击后退按钮");
+		}, 10 * 60 * 1000);
+	}
+}
+
+// 跳转到搜索页面
+function gotoResumeSearch($, pageWin){
+    //$("#hlResumeSearch").click();
+	var l = pageWin.location;
+	//var newHref = l.protocol + '//'+l.host+'/'+$("#hlResumeSearch").attr("href");
+	var newHref = 'http://ehire.51job.com/Candidate/SearchResumeIndex.aspx';
+	pageWin.location.href=newHref;
+	searchIndexUrl = newHref;
+}
+// 填写查询条件，开始搜索
+function fillSearchCondition($, pageWin, keyword){
+	zhlog.debug("method in.");
+	// 设置关键词
+	$("#search_keywod_txt").val(keyword);
+	zhlog.debug("method step 1.");
+	// 设置城市
+	// pageWin.hasArea = ["040000"];  // 深圳
+	// pageWin.hasArea = ["010000"];  // 北京
+	
+	zhlog.debug("method step 2.");
+	// if(G_condition.cityId != null){
+	// 	pageWin.hasArea.push(G_condition.cityId);
+	// }
+
+	zhlog.debug("method step 3.");
+	pageWin.EHRSearchIndex.changeSearchTerm();
+	// 设置其他条件
+	if(G_condition.searchCondition != null){
+		var condition = G_condition.searchCondition;
+		zhlog.debug("method step 4.");
+		// 设置城市
+		if(condition.city != null && condition.city.length > 0){
+			pageWin.hasArea = [];
+			zhlog.debug("method step 5.");
+			for(var cityIndex =0 ;cityIndex < condition.city.length;cityIndex++){
+				pageWin.hasArea.push(condition.city[cityIndex] + "");
+			}
+			// pageWin.hasArea.push("040000");
+			
+			zhlog.log("has area : " + JSON.stringify(pageWin.hasArea));
+			// 如果填的城市不正确， 会报错 [11748:1027/171845:ERROR:nw_shell.cc(336)] TypeError: Cannot read property 'length' of undefined
+			// 现在这个函数不调用, 城市不会改
+			pageWin.resume_areaLayer.comfirm(0);
+			
+			zhlog.debug("method step 7.");
+		}else{
+			pageWin.hasArea = [];
+			pageWin.resume_areaLayer.comfirm(0);
+		}
+
+		// 设置期望工作地
+		if(condition.in_city_id != null){
+			zhlog.log("in_city_id : " + condition.in_city_id);
+			pageWin.resume_areaLayer.initAreaData('search_expjobarea_txt','search_expjobarea_hid',0,1,0,'search_expjobarea_weizao',1,{isExpjobArea:true});
+			pageWin.resume_areaLayer.selectarea(condition.in_city_id + "",0,1,1);
+		}
+
+		// 设置户口
+		if(condition.hold_city_id != null){
+			zhlog.log("hold_city_id : " + condition.hold_city_id);
+			pageWin.resume_areaLayer.initAreaData('search_hukou_txt','search_hukou_hid',0,1,0,'search_hukou_weizao',1);
+			pageWin.resume_areaLayer.selectarea(condition.hold_city_id + "",0,1,1);
+		}
+
+		// 设置公司名
+		if(condition.company_full_name != null){
+			$("#search_lastcompany_txt").val(condition.company_full_name);
+		}
+
+		// 更新时间
+		if(condition.update_time != null){
+			var sqtUpdateTimeId = new Number(condition.update_time);
+			zhlog.log("update time:" + condition.update_time);
+			// sqt 选项
+			// 	<option value="0">不限</option>
+			// <option value="1">3天内</option>
+			// <option value="2">1周内</option>
+			// <option value="3">2周内</option>
+			// <option value="4">1个月内</option>
+			// <option value="5">2个月内</option>
+			// <option value="9">3个月内</option>
+			// <option value="6" selected="">6个月内</option>
+			// <option value="7">1年内</option>
+			// <option value="8">2年内</option>
+			if (sqtUpdateTimeId > 0){
+				var updateTimeId = -1;
+				if(sqtUpdateTimeId == 1 || sqtUpdateTimeId == 2){
+					updateTimeId = 0;  // 51近一周
+				}
+				if(sqtUpdateTimeId == 3){
+					updateTimeId = 1;   // 51近2周 
+				}
+				if(sqtUpdateTimeId == 4){
+					updateTimeId = 2;    // 51近一月
+				}
+				if(sqtUpdateTimeId == 5){
+					updateTimeId = 3;    // 51近2月
+				}
+				if(sqtUpdateTimeId == 6 || sqtUpdateTimeId == 9){
+					updateTimeId = 4;     // 51近6月
+				}
+				if(sqtUpdateTimeId == 7){
+					updateTimeId = 5;     // 51近12月
+				}
+				if(sqtUpdateTimeId == 8){
+					updateTimeId = 6;     // 12月及以上
+				}
+				zhlog.log("updateTimeId:" + updateTimeId);
+				if(updateTimeId != -1){
+					$("#search_rsmupdate_a_" + updateTimeId).click();
+					zhlog.debug("updateTimeId 1 option click");
+				}
+
+			}
+		}
+
+		var judgeSalaryId = function(salaryStart){
+			var salaryStartId = -1;
+
+			if(salaryStart < 1500){
+				salaryStartId = 1;
+			}else if(salaryStart <= 2000){
+				salaryStartId = 2;
+			}else if(salaryStart <= 3000){
+				salaryStartId = 3;
+			}else if(salaryStart <= 4500){
+				salaryStartId = 4;
+			}else if(salaryStart <= 6000){
+				salaryStartId = 5;
+			}else if(salaryStart <= 8000){
+				salaryStartId = 6;
+			}else if(salaryStart <= 10000){
+				salaryStartId = 7;
+			}else if(salaryStart <= 15000){
+				salaryStartId = 8;
+			}else if(salaryStart <= 20000){
+				salaryStartId = 9;
+			}else if(salaryStart <= 25000){
+				salaryStartId = 10;
+			}else if(salaryStart <= 30000){
+				salaryStartId = 11;
+			}else if(salaryStart <= 40000){
+				salaryStartId = 12;
+			}else if(salaryStart <= 50000){
+				salaryStartId = 13;
+			}else if(salaryStart <= 70000){
+				salaryStartId = 14;
+			}else if(salaryStart <= 100000){
+				salaryStartId = 15;
+			}
+			return salaryStartId;
+		}
+		// 最低薪资范围
+		if(condition.salary_start != null){
+
+			// $("#change_search_term").click();
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_0" onclick="EHRSearchIndex.selectdata('不限','01','cursalaryfrom',0,16,17)">不限</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_1" onclick="EHRSearchIndex.selectdata('1.5k','02','cursalaryfrom',2,16,17)">1.5k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_2" onclick="EHRSearchIndex.selectdata('2k','03','cursalaryfrom',3,16,17)">2k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_3" onclick="EHRSearchIndex.selectdata('3k','04','cursalaryfrom',4,16,17)">3k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_4" onclick="EHRSearchIndex.selectdata('4.5k','05','cursalaryfrom',5,16,17)">4.5k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_5" onclick="EHRSearchIndex.selectdata('6k','06','cursalaryfrom',6,16,17)">6k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_6" onclick="EHRSearchIndex.selectdata('8k','07','cursalaryfrom',7,16,17)">8k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_7" onclick="EHRSearchIndex.selectdata('10k','08','cursalaryfrom',8,16,17)">10k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_8" onclick="EHRSearchIndex.selectdata('15k','13','cursalaryfrom',9,16,17)">15k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_9" onclick="EHRSearchIndex.selectdata('20k','09','cursalaryfrom',10,16,17)">20k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_10" onclick="EHRSearchIndex.selectdata('25k','14','cursalaryfrom',11,16,17)">25k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_11" onclick="EHRSearchIndex.selectdata('30k','10','cursalaryfrom',12,16,17)">30k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_12" onclick="EHRSearchIndex.selectdata('40k','15','cursalaryfrom',13,16,17)">40k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_13" onclick="EHRSearchIndex.selectdata('50k','11','cursalaryfrom',14,16,17)">50k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_14" onclick="EHRSearchIndex.selectdata('70k','16','cursalaryfrom',15,16,17)">70k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryfrom_a_15" onclick="EHRSearchIndex.selectdata('100k','12','cursalaryfrom',16,16,17)">100k</a>
+
+			var salaryStart = new Number(condition.salary_start);
+			zhlog.log("salary_start:" + condition.salary_start);
+			if (salaryStart > 0){
+				
+				var salaryStartId = judgeSalaryId(salaryStart);
+				zhlog.log("salary_startId:" + salaryStartId);
+				if(salaryStartId != -1){
+					$("#search_cursalaryfrom_a_" + salaryStartId).click();
+				}
+			}
+		}
+		// 最高薪资范围
+		if(condition.salary_end != null){
+
+			// 最高与最低的ID还不一样。。。
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_0" onclick="EHRSearchIndex.selectdata('不限','99','cursalaryto',0,17,17)">不限</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_1" onclick="EHRSearchIndex.selectdata('1.5k','01','cursalaryto',2,17,17)">1.5k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_2" onclick="EHRSearchIndex.selectdata('2k','02','cursalaryto',3,17,17)">2k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_3" onclick="EHRSearchIndex.selectdata('3k','03','cursalaryto',4,17,17)">3k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_4" onclick="EHRSearchIndex.selectdata('4.5k','04','cursalaryto',5,17,17)">4.5k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_5" onclick="EHRSearchIndex.selectdata('6k','05','cursalaryto',6,17,17)">6k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_6" onclick="EHRSearchIndex.selectdata('8k','06','cursalaryto',7,17,17)">8k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_7" onclick="EHRSearchIndex.selectdata('10k','07','cursalaryto',8,17,17)">10k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_8" onclick="EHRSearchIndex.selectdata('15k','08','cursalaryto',9,17,17)">15k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_9" onclick="EHRSearchIndex.selectdata('20k','13','cursalaryto',10,17,17)">20k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_10" onclick="EHRSearchIndex.selectdata('25k','09','cursalaryto',11,17,17)">25k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_11" onclick="EHRSearchIndex.selectdata('30k','14','cursalaryto',12,17,17)">30k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_12" onclick="EHRSearchIndex.selectdata('40k','10','cursalaryto',13,17,17)">40k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_13" onclick="EHRSearchIndex.selectdata('50k','15','cursalaryto',14,17,17)">50k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_14" onclick="EHRSearchIndex.selectdata('70k','11','cursalaryto',15,17,17)">70k</a>
+			// <a href="javascript:void(0)" id="search_cursalaryto_a_15" onclick="EHRSearchIndex.selectdata('100k','16','cursalaryto',16,17,17)">100k</a>
+
+			var salaryEnd = new Number(condition.salary_end);
+			zhlog.log("salary_end:" + condition.salary_end);
+			if (salaryEnd > 0){
+				
+				var salaryEndId = judgeSalaryId(salaryEnd);
+				zhlog.log("salary_endId:" + salaryEndId);
+				if(salaryEndId != -1){
+					$("#search_cursalaryto_a_" + salaryEndId).click();
+				}
+			}
+
+
+		}
+
+		// 工作年限
+		zhlog.log("work_exp:" + condition.work_exp);
+		zhlog.log("degree:" + condition.degree);
+		if(condition.work_exp != null){
+			var expId = new Number(condition.work_exp);
+			var expOptionId = -1;
+
+			if(expId == 12){
+				expOptionId = 1;
+			}
+			if(expId == 13){
+				expOptionId = 2;
+			}
+			if(expId == 1){
+				expOptionId = 3;
+			}
+			if(expId == 2){
+				expOptionId = 4;
+			}
+			if(expId == 3){
+				expOptionId = 5;
+			}
+			if(expId == 4 || expId == 5){
+				expOptionId = 6;
+			}
+			if(expId == 6 || expId == 7 || expId == 8){
+				expOptionId = 7;
+			}
+			if(expId == 9 || expId == 10){
+				expOptionId = 8;
+			}
+			zhlog.log("expOptionId:" + expOptionId);
+			if(expOptionId != -1){
+				$("#search_workyearfrom_a_" + expOptionId).click();
+				zhlog.debug("1 option click");
+			}
+		}
+
+		// 学历
+		if(condition.degree != null){
+			var degreeId = new Number(condition.degree);
+			var degreeOptionId = -1;
+			if(degreeId == 0){
+				degreeOptionId = 7;
+			}
+			if(degreeId == 1){
+				degreeOptionId = 6;
+			}
+			if(degreeId == 2){
+				degreeOptionId = 5;
+			}
+			if(degreeId == 3){
+				degreeOptionId = 4;
+			}
+			if(degreeId == 4){
+				degreeOptionId = 3;
+			}
+			if(degreeId == 5 || degreeId == 6){
+				degreeOptionId = 2;
+			}
+			if(degreeOptionId != -1){
+				$("#search_degreefrom_a_" + degreeOptionId).click();
+				zhlog.debug("2 degree click");
+			}
+		}
+
+		// 年龄
+		if(condition.age != null){
+			var ageFrom = new Number(condition.age);
+			ageFrom = ageFrom < 18 ? 18 : ageFrom;
+			$("#search_age_from").val(ageFrom);
+			zhlog.debug("3 age from ");
+		}
+		if(condition.ages != null){
+			$("#search_age_to").val(condition.ages);
+			zhlog.debug("4 age to ");
+		}
+
+		// 性别
+
+	// $("#woman_sex_cn").click();  //  选择女
+	// $("#man_sex_cn").click();  //  选择男
+	}
+	
+
+	zhlog.debug("5 resume_areaLayer confirm ");
+
+
+	// 创建存储目录，以表 web_search_content id 做目录
+	if(keyword != null && keyword.length > 0){
+		G_keywordDir = G_conf.htmlSaveDir + "searchid_" + G_condition.searchId;
+		//alert("key dir:" + keywordDir);
+		if(!fs.existsSync(G_keywordDir)){
+			fs.mkdir(G_keywordDir);
+		}
+	}
+
+	zhlog.debug("6 end before setTimeout");
+	setTimeout(function(){
+		zhlog.debug("7 search_submit is null:" + ($("#search_submit")));
+		$("#search_submit").click();
+	}, 10000);
+}
+// download resume
+function downloadResume($, pageWin){
+	var noResult = $(".Common_list-table .Common_list-null");
+	if(noResult != null && noResult.length > 0){
+		zhlog.log("搜索结果为空。。 byebye");
+		gotoResumeSearch($, pageWin);
+		return;
+	}
+	var btnNext = $("#pagerBottomNew_nextButton");
+
+	// var inputs=$("input");
+	// for(var i=0;i<inputs.length;i++){
+	// 	var input = $(inputs[i]);
+	// 	if(input.attr("id") == "pagerBottom_nextButton"){
+	// 		btnNext = input;
+	// 	}
+		
+	// 	//console.log("type:"+ input.attr("type")+ " id:" + input.attr("id") + " value:" + input.val());
+	// }
+
+	var trs = $("tr");
+	var testLink = "";
+	var l = pageWin.location;
+	var urlPre = l.protocol + '//'+l.host+'/';  // 链接前缀
+	var normalTrs = [];
+	for(var i=0;i<trs.length;i++){
+		var tr = trs[i];
+		var tds = $("td", tr);
+		if(tds.length != 10){
+			//console.log("not normal tr, tds size:" + tds.length);
+			continue;
+		}
+		normalTrs[normalTrs.length] = tr;
+	}
+	saveResume($, pageWin, urlPre, normalTrs, 0, btnNext);
+}
+function saveResume($, pageWin, urlPre, trs, index, btnNext){
+	zhlog.log("本页第(" + index + ")个简历  trs.length:" + trs.length);
+
+	if(trs.length == 0){
+		zhlog.warn("简历信息行数为0， 这不科学。");
+	}
+	if(btnNext == null || btnNext.length == 0){
+		zhlog.error("下一页的按钮没取到。。。");
+	}
+
+	// 当前查询停止时，不再下载简历
+	if(G.stopSearchIdMap[G_condition.searchId] == 1){
+		zhlog.log("搜索条件被标记为搜索结束。 searchId：" + G_condition.searchId);
+		gotoResumeSearch($, pageWin);
+		return;
+	}
+
+	zhlog.log("下一页：" + btnNext.text());
+	// TODO ZHCH DELETE  这里只下载两个简历
+	// if(index >= 1){
+	if(index >= trs.length){
+		var pageCountInfo = $(".Search_num-set span");
+		zhlog.log("页面数据信息：" + pageCountInfo.text());
+		var nowPage = 1;
+		var totalPage = 100;
+
+		try{
+			var reg = /(\d+)\/(\d+)/;
+			var group = pageCountInfo.text().match(reg);
+			if(group != null){
+				nowPage = new Number(group[1]);
+				totalPage = new Number(group[2]);
+				zhlog.log("解析出当前页码 :" + nowPage + '/' + totalPage);
+			}
+		}catch(e){
+			zhlog.error("取页码数据时出错。");
+		}
+
+
+		zhlog.log("nowPage is : " + nowPage + '/' + totalPage + " and loginedCount is :" + loginedCount);
+
+
+		// TODO ZHCH DELETE 这里页数只取两页
+		// if(nowPage >= 2){
+		if(nowPage >= totalPage){
+			gotoResumeSearch($, pageWin);
+			return;
+		}
+
+		//$("#pagerBottom_nextGo").click();
+		zhlog.log("button text is :" + btnNext.attr("title") + "  length is :" + btnNext.length);
+		btnNext[0].click();
+		zhlog.log("here click next go");
+		return;
+	}
+
+	// TODO ZHCH DELETE
+	// zhlog.log("这里假装得到了文件了， 好， return");
+	// setTimeout(	function(){saveResume($, pageWin, urlPre, trs, index + 1, btnNext)}, 1000);
+	// return;
+
+
+	console.log("save resume index:" + index);
+	var tr = trs[index];
+	var tds = $("td", tr);
+	var link = $("a", tr);
+	var timeTd = $(tds[tds.length -2]);
+	var fileExist = false;
+	var downloadTooFast = false;
+
+	if(link == null || timeTd == null){
+		zhlog.log("something is nul link:" + link + " time:" + timeTd);
+	}else{
+		var id = link.text();
+		var time = timeTd.text();
+		console.log(link.text() + "--" + timeTd.text());
+		var filepath = G_keywordDir + '/' + id + '__' + time+".html";
+
+		fileExist = fs.existsSync(filepath);
+
+		if(fileExist){
+			zhlog.log("file exist: " + filepath);
+		}else{
+			var resumeUrl = urlPre + link.attr("href");
+			//zhlog.log("send get request！！");
+			$.ajax({ 
+				type: "get", 
+				url: resumeUrl, 
+				cache:false, 
+				async:false, 
+				dataType:  "text" , 
+				success: function(response){
+						//zhlog.log("get de fan hui jieguo！！");
+					if(response.indexOf("您的操作过于频繁") >= 0){
+						downloadTooFast = true;
+						G_tooFastTime++;
+						zhlog.log("返回了 您的操作过于频繁！！");
+					}else{
+						G_tooFastTime = 0;
+						//zhlog.log("zheng chang input！！");
+						zhlog.log("上传文件00--1 :" + filepath)
+						fs.writeFileSync(filepath, response);
+						zhlog.log("上传文件00 :" + filepath)
+						uploadResumeFile(filepath, G_condition.searchId);
+					}
+				}
+			});
+		}
+
+	}
+
+
+	var normalSleep = (Math.ceil(Math.random() * 10) + 8 ) * 1000; // 正常的暂停时间
+	var nowHour = new Date().getHours();
+	if(nowHour < 8){  // 如果是 8 点之前， 一直等到8点后再开始
+		normalSleep = (8-nowHour) * 3600 * 1000 +  1800 * 1000;
+		zhlog.log("时间在8点之前，等到8点之后再继续 normalSleep:" + normalSleep);
+	}
+
+
+	// 保存完文件再进行下一次
+	var sleepTime = fileExist ? 50 : normalSleep; // 下载两封的间隔
+	var sleepMins =  25 + G_tooFastTime * 30;
+	sleepMins = sleepMins > 120 ? 120 : sleepMins; // 最多120分钟
+
+	if(nowHour >= 8){
+		sleepTime = downloadTooFast ? sleepMins * 60 * 1000 : sleepTime;
+	}
+
+	var nextIndex = downloadTooFast ? index : index + 1; // 如果返回错误，索引就不加一
+	zhlog.log("sleep time:" + (downloadTooFast ? sleepMins:0) + "mins " + sleepTime);
+
+	// 下载 2000 个，休息半小时
+	G.downloadCount = G.downloadCount + 1;
+	if(G.downloadCount > 2000 && sleepTime < 30 * 60 * 1000){
+		zhlog.log("下载了 2000 多个，休息一会，原先的sleep 时间是:" + sleepTime);
+		sleepTime = 30 * 60 * 1000;
+		G.downloadCount = 0;
+	}
+
+	setTimeout(function(){saveResume($, pageWin, urlPre, trs, nextIndex, btnNext)}, sleepTime);
+}
+
+
+
+
+
+//测试用例
+//http://nodejs.org/api/http.html#http_http_request_options_callback
+
+function uploadResumeFile(filePath, searchId){
+	var fileDataInfo = [
+	    {urlKey: "source", urlValue: "51job"},
+	    {urlKey: "searchId", urlValue: searchId},
+	    {urlKey: "account", urlValue: G_conf.user.loginId}
+	]
+
+	    // {urlKey: "myfile", urlValue: "E:\\1.jpg"},
+	    // {urlKey: "myfile", urlValue: "文件不存在"},
+	    // {urlKey: "myfile", urlValue: ""},
+	    // {urlKey: "myfile", urlValue: ""},
+	    // {urlKey: "myfile", urlValue: "E:\\Pro 中文  空格.mp3"},
+	    // {urlKey: "myfile", urlValue: "E:\\DFBF.jpg"},
+	var files = [
+	    {urlKey: "myfile", urlValue: filePath}
+	]
+
+	var options = {
+	    host: G_searchHost.host,
+	    port: G_searchHost.port,
+	    method: "POST",
+	    path: "/resume/search/upload"
+	}
+
+	var req = http.request(options, function(res) {
+	    // zhlog.log("RES:" + res);
+	    zhlog.log('STATUS: ' + res.statusCode);
+	    // zhlog.log('HEADERS: ' + JSON.stringify(res.headers));
+	    //res.setEncoding("utf8");
+	    res.on("data", function(chunk) {
+	    	// 上传文件返回数据
+	        zhlog.log("upload file resp BODY:" + chunk);
+	        var resp = JSON.parse(chunk);
+	        if(resp != null && resp.status == 2){
+	        	// 当前制定 id 不停止， 其他停止
+	        	if(!(G.sendSearchId == true && searchId == G.firstSearchId)){
+	        		G.stopSearchIdMap[searchId] = 1;
+	        	}
+	        }
+	    })
+	});
+
+	req.on('error', function(e) {
+	    zhlog.log('problem with request:' + e.message);
+	    zhlog.log(e);
+	});
+	zhlog.log(searchId + "上传文件 :" + filePath)
+	Upload.postFile(fileDataInfo, files, req);
+}
+// console.log("done");
+
+</script>
+</html>

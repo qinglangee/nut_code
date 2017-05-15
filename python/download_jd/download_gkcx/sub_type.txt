@@ -1,0 +1,3 @@
+{'url':'http://gkcx.eol.cn/soudaxue/queryschool.html?argschtype=%E6%99%AE%E9%80%9A%E6%9C%AC%E7%A7%91&schoolSign=2','pname':'all','pno':'0','name':'普通本科','parent':'all'}
+{'url':'http://gkcx.eol.cn/soudaxue/queryschool.html?argschtype=%E7%8B%AC%E7%AB%8B%E5%AD%A6%E9%99%A2&schoolSign=2','pname':'all','pno':'0','name':'独立学院','parent':'all'}
+{'url':'http://gkcx.eol.cn/soudaxue/queryschool.html?argschtype=%E9%AB%98%E8%81%8C%E9%AB%98%E4%B8%93&schoolSign=2','pname':'all','pno':'0','name':'高职高专','parent':'all'}

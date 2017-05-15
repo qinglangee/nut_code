@@ -1,0 +1,2 @@
+#! /bin/bash
+sendemail -f chengz@staff.l99.com -t chengz@staff.l99.com -xu chengz@staff.l99.com -xp 123456lifeix -s smtp.exmail.qq.com -o tls=auto -o timeout=10 -u 张程日志`date +%F` -o message-file=/home/lifeix/Documents/l99/work-diray/diraycontent -o message-charset=utf-8

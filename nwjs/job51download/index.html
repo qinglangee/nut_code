@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hello World!</title>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <h1>Hello World!</h1>
+    We are using node.js <script>document.write(process.version)</script>.
+  </body>
+<script >
+var gui = require('nw.gui');
+var fs = require('fs');
+var resultBuffer = "abcdefg";
+// fs.writeFile('./resut.text',resultBuffer,function(err){
+//        if(err) throw err;
+//        console.log('has finished');
+//    });
+
+       console.log('has finished');
+
+var logined = false;
+var win = gui.Window.open ('http://ehire.51job.com/MainLogin.aspx', {
+    position: 'center',
+    width: 901,
+    height: 667,
+    focus:true
+});
+
+// win.showDevTools();
+
+// var ccuuv = console;
+
+win.on ('loaded', function(){
+    // the native onload event has just occurred
+    var url = win.window.location.href;
+    var $ = win.window.$;
+    // ccuuv.log(url);
+    console.log(url);
+    if(url.indexOf("MainLogin.aspx") > 0 ){
+		if(!logined){
+			logined = true;
+			login($);
+		}
+    }else if(url.indexOf("ehire.51job.com/Navigate.aspx") > 0){
+        gotoResumeSearch($, win.window);
+    }else if(url.indexOf("SearchResumeIndex.aspx") > 0){
+        gotoResumeSearch($, win.window);
+    }else{
+    	// ccuuv.log("other url :" + url);
+    	alert("other url:" + url);
+    }
+    var document = win.window.document;
+  
+});
+
+// 登陆
+function login($){
+    
+    $("#txtMemberNameCN").val("北京欢乐之旅");
+    $("#txtUserNameCN").val("hlzl");
+    $("#txtPasswordCN").val("hao123");
+    $("#Login_btnLoginCN").click();
+}
+
+// 跳转到搜索页面
+function gotoResumeSearch($, pageWin){
+	var text = $("#hlResumeSearch").text();
+	$("#hlResumeSearch").text("abcdefg");
+    $("#hlResumeSearch").click();
+    var str = "";
+    for(pp in pageWin.location){
+    	console.log(pp + "=" + pageWin.location[pp]);
+    }
+	var l = pageWin.location;
+	var newHref = l.protocol + '//'+l.host+'/'+$("#hlResumeSearch").attr("href");
+	pageWin.location.href=newHref;
+	$("#hlResumeSearch").text(text + 1);
+}
+</script>
+</html>

@@ -4,7 +4,11 @@
 # Script should work on Centos, Redhat and Fedora Linux. It depends on the file tomcatRunner. 
 # WARNING: The script does not allow to run Tomcat on privileged ports as non root user. 
 # For this use case try : http://tomcat.apache.org/tomcat-6.0-doc/setup.html and http://commons.apache.org/daemon/jsvc.html
-# 
+#
+
+# chkconfig --add tomcat
+# chkconfig --list tomcat
+
 # Should start normally after the databases and before http server
 # chkconfig: 345 80 10
 # description: Jakarta Tomcat Java Servlet/JSP Container

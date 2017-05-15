@@ -1,0 +1,1 @@
+CreateObject("Wscript.Shell").run "notepad  C:\Windows\System32\drivers\etc\hosts"

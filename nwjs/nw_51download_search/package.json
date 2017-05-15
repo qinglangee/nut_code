@@ -1,0 +1,11 @@
+{
+  "nodejs":true,
+  "window": {
+    "toolbar": true
+  },
+
+
+  "name": "nw-tianhui",
+  "version": "0.0.1",
+  "main": "index.html"
+}

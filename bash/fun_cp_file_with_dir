@@ -1,0 +1,56 @@
+#! /bin/bash
+
+
+cp_files(){
+    if [ $# -lt 6 ]; then
+        echo "参数个数不对"
+    fi
+
+    # 从 $filename 文件中读取一批 pre 开头的文件名
+    # 把 pre 开头的文件按目录结构从 src_dir 复制到 dest_dir 中(去掉了文件路径中的 pre)
+    pre=$1
+    pre_len=${#pre}
+    # 输入文件
+    filename=$2
+    # 源文件存储目录
+    src_dir=$3
+    # 文件目标目录
+    dest_dir=$4
+    top_dir=$5
+    # 日志文件
+    log_file=$6
+
+    #echo pre:$pre filename:$filename src:$src_dir dest:$dest_dir top:$top_dir log:$log_file
+
+
+    rm -rf $dest_dir/$top_dir
+    mkdir -p $dest_dir/$top_dir
+
+    echo "" >> $log_file
+    date +%Y-%m-%d_%T >> $log_file
+    cat $filename >> $log_file
+
+
+    while read line
+    do
+        #echo $line
+        #echo $src_dir$line
+        inner=${line:pre_len}
+        echo $inner
+        filedir=`dirname $dest_dir/$top_dir/$inner`
+        #echo $filedir
+        mkdir -p $filedir
+        real_file=$src_dir/$inner
+        #echo $real_file
+        cp $real_file $filedir
+        echo "======================="
+    done  < $filename
+
+    find $dest_dir/$top_dir -type f   # 查看一下结果
+
+    num=`find $dest_dir/$top_dir -type f | wc -l `
+    echo "共 $num 个文件"
+
+
+    #scp -r $dest_dir/$top_dir root@192.168.168.66:/tmp
+}

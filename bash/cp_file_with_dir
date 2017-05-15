@@ -1,0 +1,35 @@
+#! /bin/bash
+# 从 input 文件中读取一批 pre 开头的文件名
+# 把 pre 开头的文件按目录结构从 src_dir 复制到 dest_dir 中
+pre=/source/sqt_web_metronic/trunk/
+pre_len=${#pre}
+
+# 输入文件
+filename=input
+# 源文件存储目录
+src_dir=/usr/local/nginx/html/web/mongodb
+#src_dir=/d/work/source/sqt_web_metronic/trunk
+# 文件目标目录
+dest_dir=/tmp
+#dest_dir=/d/upload
+top_dir=zh_mon
+
+while read line
+do
+	#echo $line
+	#echo $src_dir$line
+	inner=${line:pre_len}
+	echo $inner
+	filedir=`dirname $dest_dir/$top_dir/$inner`
+	#echo $filedir
+	mkdir -p $filedir
+	real_file=$src_dir/$inner
+	#echo $real_file
+	cp $real_file $filedir
+	echo "======================="
+done  < $filename
+
+find $dest_dir/$top_dir -type f   # 查看一下结果
+
+
+#scp -r $dest_dir/$top_dir root@192.168.168.66:/tmp
