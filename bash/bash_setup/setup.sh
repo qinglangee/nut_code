@@ -50,7 +50,7 @@ fi
 
 
 
-ZH_NUT=$here/../../..
+export ZH_NUT=$here/../../..
 
 if [ ! -e "$HOME/.zh_setup" ]; then  # cp 一些空文件备用
 	echo "not zh_setup"

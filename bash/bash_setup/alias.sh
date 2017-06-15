@@ -34,20 +34,8 @@ alias vpnc="expressvpn connect "
 alias vpnd="expressvpn disconnect "
 alias vpnl="expressvpn list "
 
-# 进入　lsg $1 选中的目录，　如果有两个参数
-# 第二个参数指定进入第几条（从１开始）
-function cdg {
-	lsg $1
-	index=1
-	if [ $# -gt 1 ]; then
-		index=$2
-	fi
-	dest=`lsg $1|head -n $index|tail -n 1`
-	p_green "dest dir is: "
-	pln_red $dest
-	cd $dest
-}
-
+# tail 系列
+alias zhl="tail -fn222 "
 
 # vim 系列
 alias vimrc="vim $HOME/.vimrc"
@@ -99,6 +87,13 @@ alias mvnde="mvn package -DskipTests javadoc:jar source:jar deploy"
 alias v='f -e vim' # quick opening files with vim
 alias m='f -e mplayer' # quick opening files with mplayer
 alias o='a -e xdg-open' # quick opening files with xdg-open
+
+# tmux 系列
+alias zhta="tmux attach -t "
+alias zhtl="tmux list-session"
+
+# 交换 Ctrl 和 CapsLock
+alias zhchange="xmodmap $ZH_NUT/code/bash/exchange"
 
 
 #其它alias

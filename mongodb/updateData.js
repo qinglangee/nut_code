@@ -36,3 +36,13 @@ db.comment.find({content:{$regex:"^emotionId:(\\d+)"}, rootId:8336365}).forEach(
     }
     db.comment.update({"_id":x._id},x);
 })
+
+// 随机数据更新
+var authors = [];
+authors.push({"name" : "小明","avatar" : "http://avatar.l99.com/90x90/d3b/1497257749390_wtz414.jpg","accountId" : NumberLong(53895120),"gender" :1,"longNO" : NumberLong(140473910)});
+authors.push({"name" : "小杰","avatar" : "http://avatar.l99.com/90x90/f3d/1497257860670_pqr4s6.jpg","accountId" : NumberLong(53895124),"gender" :1,"longNO" : NumberLong(140473915)});
+
+db.data.find({post_type:{$gt:50000}, author:null}).forEach(function(item){
+    var randAuthor = authors[Math.floor(Math.random() * authors.length)];
+    db.data.update({"_id":item._id}, {$set:{author:randAuthor}});
+});
