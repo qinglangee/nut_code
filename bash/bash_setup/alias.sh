@@ -51,13 +51,23 @@ alias zhmas="git ck master && git log --oneline --decorate --color --graph | hea
 alias gitl="git log --oneline --decorate --color --graph"
 
 # host
-alias zhh1="cat /etc/hosts1> /etc/hosts;zhhg;zhh"
-alias zhh1.5="cat /etc/hosts1.5> /etc/hosts;zhhg;zhh"
-alias zhh2="cat /etc/hosts2> /etc/hosts;zhhg;zhh"
-alias zhh3="cat /etc/hosts3> /etc/hosts;zhhg;zhh"
-alias zhh3.5="cat /etc/hosts3> /etc/hosts;cat /etc/hosts3.5>>/etc/hosts;zhhg;zhh"
-alias zhh4="cat /etc/hosts4> /etc/hosts;zhhg;zhh"
-alias zhhg="cat /etc/hostscommon >> /etc/hosts"
+function cphost {
+    if [ $# -gt 1 ] ; then
+        cat $1 > /etc/hosts
+    else
+        cat /etc/hostscommon > /etc/hosts
+        cat $1 >> /etc/hosts
+    fi
+}
+function 
+alias zhh="head -200 /etc/hosts | grep l99.com"
+alias zhhc="cphost /etc/hostscommon override"
+alias zhh1="cphost /etc/hosts1"
+alias zhh1.5="cphost /etc/hosts1.5"
+alias zhh2="cphost /etc/hosts2"
+alias zhh3="cphost /etc/hosts3"
+alias zhh3.5="cphost /etc/hosts3;cphost /etc/hosts3.5"
+alias zhh4="cphost /etc/hosts4"
 #"cat /etc/hostsgoogle>> /etc/hosts;zhh"
 
 # du

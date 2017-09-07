@@ -44,7 +44,7 @@ test="/home/zhch/temp/d3/nut_code"
 
 flag_file=$sync_dest/zh_back_flag_file
 
-if [[ -f $flag_file ]]; then
+if [[ -f "$flag_file" ]]; then
     #start_sync $nut_store $sync_dest
     #sync_and_tar "$test" "$sync_dest/test"
     sync_and_tar "$nut_store" "$sync_dest/nut_backup"
