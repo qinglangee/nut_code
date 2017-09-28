@@ -1,0 +1,20 @@
+#! /bin/bash
+newWordFile="zhignore/new_words_manul"
+learnFile="zhignore/learn_words"
+knownFile="zhignore/known_words"
+
+storeKnown="known"
+storeLearn="to_learn"
+
+cat $newWordFile |grep -v "@" > $learnFile
+cat $newWordFile |grep "@" > $knownFile
+
+cat $knownFile $storeKnown |sed "s/@//g" |sort |uniq > "${knownFile}_01"
+cat $learnFile $storeLearn |sort |uniq > "${learnFile}_01"
+
+knownNum=`cat ${knownFile}_01 |wc -l`
+learnNum=`cat ${learnFile}_01 |wc -l`
+knownNumNew=`cat ${knownFile} |wc -l`
+learnNumNew=`cat ${learnFile} |wc -l`
+echo "known words new: $knownNumNew all: $knownNum learn words new: $learnNumNew all: $learnNum"
+

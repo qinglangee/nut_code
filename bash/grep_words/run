@@ -1,0 +1,40 @@
+#! /bin/bash
+# 在 zhignore/article 文件中放文章内容，执行./run , 在zhignore/new_words中得到新单词
+
+filterFile="zhignore/filter"
+wordFile="zhignore/words"
+newWordsFile="zhignore/new_words"
+filterPart=("letters" "known" "to_learn")
+
+
+function appendFilter(){
+    cat $1|awk '{print "@"$0"@"}' >> $filterFile
+    cat $1|awk '{print "@"toupper(substr($0,1,1))substr($0,2,length($0))"@"}' >> $filterFile
+}
+
+echo "@a@" > $filterFile
+for filename in ${filterPart[@]}
+do
+    appendFilter $filename
+done
+
+#cat zhignore/article | awk '{print $0}'
+python break.py > $wordFile
+
+wordUniq="${wordFile}_uniq"
+# 得到文章单词列表
+cat $wordFile |sort |uniq > "${wordUniq}"
+
+# 得到新单词
+
+cat $wordUniq |awk '{print "@"$0"@"}' > "${newWordsFile}_01"
+grep -F -v -f $filterFile "${newWordsFile}_01" | sort | uniq > "${newWordsFile}_02"
+
+#sed -i "s/@//g"  "${newWordsFile}_02"
+
+cat "${newWordsFile}_02" |sed "s/@//g" > "${newWordsFile}"
+
+wordNum=`cat $newWordsFile | wc -l`
+echo "new words count: $wordNum"
+
+

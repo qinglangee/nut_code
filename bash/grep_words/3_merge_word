@@ -1,0 +1,25 @@
+#! /bin/bash
+learnFile="zhignore/learn_words"
+knownFile="zhignore/known_words"
+
+storeKnown="known"
+storeLearn="to_learn"
+
+backupDir="zhignore/backup"
+
+datestr=`date +%Y%m%d_%H%M`
+thisBack="$backupDir/$datestr"
+
+if [ -z $thisBack ]; then
+    echo "exist"
+else
+    mkdir $thisBack
+    cp $storeKnown $thisBack
+    cp $storeLearn $thisBack
+fi
+
+cat "${knownFile}_01" > $storeKnown
+cat "${learnFile}_01" > $storeLearn
+
+wc -l $storeKnown
+wc -l $storeLearn
