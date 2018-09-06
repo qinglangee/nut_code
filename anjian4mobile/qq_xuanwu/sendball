@@ -1,0 +1,12 @@
+// 发送风铃
+delay 1500
+tap 130, 1790  // 点击挂风铃
+delay 1000
+tap 860, 1790  // 点击树洞风铃
+delay 1000
+touchdown 520, 1130, 0  // 按下语音按钮
+delay 2500
+touchup
+delay 1000
+
+tap 300, 930  // 点击发送按钮

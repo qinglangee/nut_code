@@ -1,0 +1,73 @@
+// 风铃范围 x 970,400  y 555,1530   步进范围 50 delta
+// 555,minx  
+
+// "换一批"按钮点击位置 450, 1000 
+
+// "换一批"按钮的范围 x 300 550 y 870  1120
+
+
+dim chance = 20
+do while chance > 0
+    call getAllBall()
+    // 点击换一批按钮
+    // tap 450, 1000 
+    delay 1000
+    chance = chance - 1
+loop
+
+
+// 无聊重复几遍争取摘到所的的风铃
+function getAllBall()
+    dim all = 5
+    dim oldall = all
+    do while all > 0
+        dim count = 0
+        count = scanArea()
+        // 一般一次就6个
+        if count = 0 or count > 5 then
+            showmessage "没有可以摘的铃了 这次摘了 " &count &" 个"
+            exit do
+        end if
+        
+        all = all - 1
+    loop
+    delay 1500
+    showmessage "最高 " &oldall &" 遍, 还剩" &all &" 遍, 要停了"
+end function
+
+// 扫描可能出现风铃的位置
+function scanArea()
+    dim count = 0
+    dim x=300, y=400
+    do while x < 970
+        do while y < 1530
+            if x > 550 or y < 870 or y > 1120 then
+                tap x,y
+                delay 200
+                count = count + checkGetBall()
+            end if
+            y = y + 100
+        loop
+        x = x + 100
+        y = 400
+    loop
+    delay 1500
+    count = count + checkGetBall()
+    // showmessage "本次扫铃数量 " &count
+    scanArea = count // 返回总共扫到的个数
+end function
+
+// 出现放弃按钮就点一下
+function checkGetBall()
+    dim dotx = 260, doty = 650 // 放弃按钮位置取一个点比较颜色
+    dim same
+    same = cmpColor(dotx, doty, "fa6ea8", 0.9)
+    if same > -1 then
+        tap dotx, doty
+        delay 200
+        checkGetBall = 1
+    else
+        checkGetBall = 0
+    end if
+end function
+    
