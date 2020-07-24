@@ -1,2 +1,6 @@
 把.git目录放在别处的方法, 在.git目录应该在的位置建一个.git文件，　内容如下：
 gitdir: /home/zhch/document/alone_git/nut_code
+
+windows
+
+gitdir: d:\document\alone_git\nut_code\
