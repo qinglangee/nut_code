@@ -13,6 +13,9 @@ using std::default_random_engine;
 
 // https://blog.csdn.net/u010029439/article/details/89681773
 int main(){ 
+    cout<< "c++ 11 标准中新加了更有效率的 unordered_map, 以后可且考虑用新的。 "<<endl;
+
+
     cout<< "map 用法示例============================="<<endl;
     map<int, string> maps;
     pair<map<int, string>::iterator, bool> Insert_Pair;

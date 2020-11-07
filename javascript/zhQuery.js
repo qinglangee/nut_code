@@ -24,6 +24,17 @@ var zh={
             parent.appendChild(ele);
         }
         return ele;
+    },
+    addEle:function(newEle, posEle, pos){
+        // newEle 要添加的元素
+        // posEle 定位元素，pos 指定在什么位置加 前 before、后 after、内部 append
+        if(pos == 'before'){
+            posEle.parentNode.insertBefore(newEle, posEle);
+        }else if(pos == 'append'){
+            posEle.appendChild(newEle);
+        }else{
+            posEle.parentNode.insertBefore(newEle,posEle.nextSibling);
+        }
     }
 
 }
