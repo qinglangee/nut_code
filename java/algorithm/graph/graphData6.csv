@@ -1,0 +1,10 @@
+underpants,pants,socks,ashoes,belt,jacket,watch,shirt,tie
+underpants,pants,100,,,,,,
+underpants,ashoes,600,,,,,,
+socks,ashoes,450,,,,,,
+pants,belt,650,,,,,,
+pants,ashoes,12,,,,,,
+shirt,belt,900,,,,,,
+shirt,tie,1100,,,,,,
+belt,jacket,200,,,,,,
+tie,jacket,150,,,,,,

@@ -46,3 +46,5 @@ db.data.find({post_type:{$gt:50000}, author:null}).forEach(function(item){
     var randAuthor = authors[Math.floor(Math.random() * authors.length)];
     db.data.update({"_id":item._id}, {$set:{author:randAuthor}});
 });
+
+

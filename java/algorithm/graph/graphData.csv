@@ -1,0 +1,15 @@
+A,B,C,D,E,F,G,H,I
+A,B,4
+A,H,8
+B,C,8
+B,H,11
+C,D,7
+C,F,4
+D,E,9
+D,F,14
+F,E,10
+G,F,2
+G,I,6
+H,G,1
+H,I,7
+I,C,2
