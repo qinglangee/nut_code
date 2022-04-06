@@ -23,8 +23,8 @@ var zh={
         }
         return ele.querySelectorAll(cssSelector);
     },
-    l:function(msg1){
-        console.log(msg1);
+    l:function(...args){
+        console.log(...args);
     },
     c:function(param, html, parent){
         // 创建控件，可以顺便设置 innerHTML 和 放入父节点

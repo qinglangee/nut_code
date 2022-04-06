@@ -1,0 +1,4 @@
+#! /bin/bash
+cp  /mnt/d/eachcloud/我的坚果云/code/c99/demo_parallel/*.c  .
+gcc -fopenmp -Wall *.c 
+

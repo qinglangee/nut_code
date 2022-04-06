@@ -38,6 +38,10 @@ def server_wait_thread():
     except socket.error as msg:
         print(f"Band failed. Error code: {msg[0]} Message {msg[1]}")
         sys.exit()
+
+    #  5 here means that 5 connections can be kept. 
+    # If the server is busy for 5 connections and a 6th socket tries to connect, 
+    # then the connection is refused.
     server_socket.listen(5)
 
     print("Server started.")
